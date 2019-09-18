@@ -6,15 +6,23 @@ module.exports  =
         "application" : 
         {   
             "serverPath" : {
-                "imageDir"                      : "./public/",
-                "userUploadDir"                 : "./public/user-pic/",
-            },      
+                "mediaDir"                      : "./public/",
+                "userUploadDir"                 : "./public/user-media/",
+                "userExport"                    : "./public/user-media/export/",
+            },
+            "contentType" : {
+                "urlencode"                     : "application/x-www-form-urlencoded",
+                "formdata"                      : "multipart/form-data",
+            },       
             "variables": {
                 "first_name_required"           : "First name is required",
                 "last_name_required"            : "Last name is required",
                 "username_required"             : "Username is required",
                 "email_required"                : "Email is required, should be valid",
                 "email_or_username_exists"      : "Username/Email Exists! please try another",
+                "email_not_exists"              : "Email Not Exists!",
+                "password_invalid"              : "Password is invalid, please try again",
+                "login_success"                 : "Login Success",
                 "id_not_found"                  : "ID Not Found",
                 "user_picture_extension"        : ".jpg",
                 "image_upload_max_size"         : "Maximum upload image 2MB",
@@ -32,8 +40,14 @@ module.exports  =
                 "logout_success"                :  "Logout Successfully, Please login again",
                 "logout_unSuccess"              :  "Logout Unsuccessfull, Please try again",
                 "logged_in"                     :  "You Logged In",
-                "logged_out"                    :  "Please login again",
-            }
+                "logged_out"                    :  "Session Expired, Please login again",
+
+                "csvFileCreated"                :   "CSV file created succesfully",
+            },
+            "userCsvHeader" : [
+                {id: 'first_name', title: 'First Name'},
+                {id: 'last_name', title: 'Last Name'}
+            ]
         },
   }
 ]

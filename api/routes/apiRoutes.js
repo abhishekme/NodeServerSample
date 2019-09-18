@@ -15,7 +15,7 @@ function isAuth(req, res, next){
         res.json({message: variableDefined.variables.logged_out, status:0});
     return; // return undefined
     }
-    return next();
+    return next();  //HTTP request handlers
 }
 //-------------------- AUTH Route ---------------------------------
 app.route('/logout')
@@ -24,15 +24,17 @@ app.route('/login')
      .post(userController.validate('login'), userController.login)
 //-------------------- AUTH Route ---------------------------------
 
-//-------------------- USER SECTION REST ROUTE ---------------------------------
+//-------------------- USER SECTION ROUTE ---------------------------------
 
 app.route('/user')
     .get(isAuth, userController.getList)
     .delete(isAuth, userController.delete)
-    .post(userController.validate('create'),isAuth,userController.create)  
-app.put('/user', isAuth, userController.validate('update'),userController.update);  //PUT requires a callback, write differently
+    .post(userController.validate('create'),userController.create)
+app.put('/user', isAuth, userController.validate('update'),userController.update);  //PUT requires a callback
+app.route('/user/export')
+    .post(isAuth, userController.export)  //Need a csv file mandatory
+//-------------------- DO OTHER SECTION ROUTE ---------------------------------
 
-//-------------------- DO OTHER SECTION ---------------------------------
 
 
 };

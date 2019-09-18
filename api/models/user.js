@@ -19,8 +19,16 @@ module.exports = (sequelize, DataTypes) => {
       username: DataTypes.STRING,      
       address: DataTypes.STRING,
       city: DataTypes.STRING,
+      filename: DataTypes.STRING,
       profile_pic: DataTypes.TEXT
     },
+    /*{
+      classMethods: {
+        associate: function(models) {
+          // associations can be defined here for relationship
+        }
+      }
+    },*/
     {
       freezeTableName: true,
     });

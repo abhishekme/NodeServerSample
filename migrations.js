@@ -12,14 +12,15 @@ var connectionString = mysql.createConnection({
 
 connectionString.connect(function(err) {
   if (err) throw err;
-  console.log("MYSQL Connected!");
+  //console.log("MYSQL Connected!");
   var theDatabase = "CREATE DATABASE IF NOT EXISTS "+config.database+" CHARACTER SET latin1 COLLATE latin1_swedish_ci";
-connectionString.connect(function(err) {
+    connectionString.connect(function(err) {
     connectionString.query(theDatabase, function (err, result) {
     if (err) throw err;
-    console.log("Database created");
+    //console.log("Database created");
   });
 });
+return true;
 });
 const runDatabase                = require("./api/models");
 //================================================================

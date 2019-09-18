@@ -12,6 +12,23 @@ const theModel              = db.user;
 const theContr              = userController;
 const variableDefined       = constants[0].application;
 const fs                    = require('fs');
+//const json2csv = require('json2csv').parse;
+//const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+//const fastcsv = require('fast-csv');
+//import { ExportToCsv } from 'export-to-csv';
+//const ExportToCsv = require('export-to-csv').ExportToCsv;
+//const csv = require('csv').csv;
+//const csvParser = require('csv-parser');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+var thisObj                 = this;
+
+/*thisObj.userById = function(theId){
+  
+  var getID = theId;
+  console.log('Get Id: ', theId);
+  
+}*/
+
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
 //-----------------------------------------------------------------------
@@ -63,7 +80,6 @@ exports.apiValidation   = function(req,resp){
         validationErr.push(error);
       }      
   });
-  console.log(validationErr);
   if(validationErr.length){
     validationErr.forEach(rec => {
        validationErrMesg.push({field: rec.param, message: rec.msg});
@@ -81,8 +97,8 @@ exports.hashPassword  = function(password){
   return bCrypt.hashSync(password, bCrypt.genSaltSync(8), null);
 }
 exports.isLoggedIn  = function (req, res, next) {
-      // if user is authenticated in the session, carry on 
-    var curSession  = req.session;  
+    // if user is authenticated in the session, carry on 
+    var curSession  = req.session;
     if(curSession.userRec !=  undefined && curSession.userRec.id > 0){
         res.json({ message: variableDefined.variables.logged_in, status:1 });
         return next();
@@ -121,7 +137,7 @@ exports.login  = function(req, resp){
          }
         }).then(result => {
             if(result === null || result === undefined){
-              resp.json({ message: 'Email Not Exists!',status : 0 });
+              resp.json({ message: variableDefined.variables.email_not_exists,status : 0 });
               return;
             }
             if(result.dataValues.id > 0){
@@ -129,14 +145,20 @@ exports.login  = function(req, resp){
                var dbPassword = getRecord.password;              
                
               if(!theModel.validPassword(postBody.password, dbPassword)){
-                resp.json({ message: 'Password wrong',status : 0 });
+                result = null;
+                resp.json({ message: variableDefined.variables.password_invalid,status : 0 });
                 return;
               }
               var userRec = result.dataValues;
               if(req.session != undefined){
                 var curSession  = req.session;
                 curSession.userRec = userRec;
-                resp.json({ message: 'Login success', status : 1});
+                var userRec     = result;
+                //Show picture image
+                var picPath     = variableDefined.serverPath.userUploadDir +  userRec.dataValues.filename;
+                delete userRec.dataValues.profile_pic;
+                userRec.dataValues.profile_pic = picPath;
+                resp.json({ message: variableDefined.variables.login_success, status : 1, loggedUser: userRec.dataValues});
               }
            }
         });
@@ -153,6 +175,8 @@ exports.login  = function(req, resp){
 exports.getList = function(req, res) {
   theModel.findAll().then( (result) => res.json(result))
 };
+
+
 
 /*-----------------------------------
 /-------------CREATE USER -----------
@@ -197,6 +221,99 @@ exports.create  = function(req, resp) {
   }
 };
 
+exports.export  = function(req, res){
+  var csvExportFile   = '_user.csv';
+  var csvFilePath     = variableDefined.serverPath.userExport + csvExportFile;
+  //res.attachment(csvFilePath);
+  //const ws = fs.createWriteStream(csvFilePath);
+  // const options = { 
+  //   fieldSeparator: ',',
+  //   filename:csvFilePath,
+  //   quoteStrings: '"',
+  //   decimalSeparator: '.',
+  //   showLabels: true, 
+  //   showTitle: true,
+  //   title: 'My Awesome CSV',
+  //   useTextFile: false,
+  //   useBom: true,
+  //   useKeysAsHeaders: true,
+  //   // headers: ['Column 1', 'Column 2', etc...] <-- Won't work with useKeysAsHeaders present!
+  // };
+  // const csvExporter = new ExportToCsv(options);
+
+  var userRec = [];
+
+
+  const csvWriter = createCsvWriter({
+    path: csvFilePath,
+    header: variableDefined.userCsvHeader
+  });
+/*
+  const data = [
+    {
+      name: 'John',
+      surname: 'Snow',
+      age: 26,
+      gender: 'M'
+    }, {
+      name: 'Clair',
+      surname: 'White',
+      age: 33,
+      gender: 'F',
+    }, {
+      name: 'Fancy',
+      surname: 'Brown',
+      age: 78,
+      gender: 'F'
+    }
+  ];
+
+  csvWriter
+  .writeRecords(data)
+  .then(()=> console.log('The CSV file was written successfully'));
+*/
+
+
+  theModel.findAll().then( (result) => {
+      //var fields        = ['first_name', 'last_name', 'email', 'username', 'address', 'city'];
+      //var fieldNames    = ['First Name', 'Last Name', 'Email', 'Username', 'Address', 'City'];
+      //var csvData     = json2csv({ data: result, fields: fields, fieldNames: fieldNames });
+      //return res.send(csvData);
+      // var userRec     = result;
+      // //console.log(result);
+      // //delete userRec.dataValues.profile_pic;
+      // fastcsv
+      //   .write(userRec, { headers: true })
+      //   .pipe(ws);
+      // res.json({ message: variableDefined.variables.csvFileCreated,status : 1 }); 
+      //csvExporter.generateCsv(result, true);
+
+      /*var theRecord   = result[0].dataValues;
+      console.log(theRecord);
+      // theRecord.forEach(rec => {
+      //     console.log('Rec: ', rec);
+      // })
+      userRec.push(theRecord);
+      csvExporter.generateCsv(userRec, true);
+      res.json({ message: variableDefined.variables.csvFileCreated, status : 1 });*/
+      // var theRecord   = result[0].dataValues;
+      // res.statusCode = 200;
+      // res.setHeader('Content-Type', 'text/csv');
+      // res.setHeader("Content-Disposition", 'attachment; filename='+csvFilePath);
+      // res.csv(theRecord, true);
+      //userRec.push(theRecord);
+      //csvObj.from.array(userRec).to.path(csvFilePath);
+      var theRecord   = result;
+      //console.log("User Record: ",theRecord);
+      csvWriter
+        .writeRecords(theRecord)
+        .then(()=> res.json({ message: variableDefined.variables.csvFileCreated, status : 1 }));
+
+  })
+}
+
+
+
 /*-----------------------------------
 /-------------UPDATE USER -----------
 /---@body: [id, email,username]------
@@ -204,25 +321,49 @@ exports.create  = function(req, resp) {
 ------------------------------------*/
 exports.update = function(req, resp) {
   //Add required validation
+  var contentType = req.headers['content-type'];
+  if(contentType  ===  variableDefined.contentType.formdata) {
+      //resp.setHeader('Content-Type', 'multipart/form-data');
+      console.log('Content Type: form-data', req.files);
+      // req.on('data', (data) => {
+      //   var dataObj =  (data.toString());
+      //   console.log(dataObj);
+      // });
+      // req.busboy.on('body', function (body) {
+
+      //   console.log("body: ", body);
+      // });
+  }
+  if(contentType  ===  variableDefined.contentType.urlencode) {
+    console.log('Content Type: urlencode');
+  }
+
   //var validReturn   = theContr.apiValidation(req, resp);
   //if(validReturn)   return;
-
-  console.log('Check headers: ', req.headers, " :: ", req.method);
-  return false;
+  // if(req.headers != null){
+  //   var contype = req.headers['content-type'];
+  //   console.log("Headers: ",checkHeaders);
+  // }
+  // console.log('Check headers: ', req.headers.origin, " :: ", req.method);
+  // return false;
 
   var getData     = req.body || null;
   var getId       = req.body.id || 0;
   var getEmail    = req.body.email || '';
   var getUserName = req.body.username || '';
   //image upload processing
-  var getApiImage =  req.body.profile_pic || '';
+  var getApiImage =  req.body.profile_pic || null;
   delete req.body.id;
+
+  var curSession  = req.session;
+  var logUserRec  = curSession.userRec;
 
   if(!getId){
     resp.json({ message: variableDefined.variables.id_not_found,status : -1 }); 
     return;
   }
   else if(getEmail != null && getUserName != null){
+
       theModel.findAll(
       { where: { 
         [Op.or]: [
@@ -232,52 +373,78 @@ exports.update = function(req, resp) {
           { [Op.ne] : getId}                        
         }}).then(result => {
           var findRec = result;
-          console.log("UserRec: ",findRec);
           if(findRec.length > 0){
             resp.json({ message: variableDefined.variables.email_exists, status : 0,record: findRec }); 
             return;
           }
-          if(!findRec.length){
+          if(!findRec.length){            
             if(getData.password != undefined){
               var hashPassword = theContr.hashPassword(getData.password);
               if(hashPassword) getData.password = hashPassword;
             }
             //processing image
             if(getApiImage != null){
-              // to declare some path to store your converted image
-              var fileName      = getId + "_" + getData.first_name + variableDefined.variables.user_picture_extension;
-
-              //old_filename    = Date.now() + variableDefined.variables.user_picture_extension
-              const path        = variableDefined.serverPath.userUploadDir + fileName.toString().trim();
-              const imgdata     = getApiImage;
-              //const img = 'data:image/png;base64,aBdiVBORw0fKGgoAAA';
-              const bufferSize    = Buffer.from(imgdata.substring(imgdata.indexOf(',') + 1));
-              const bufferLength  = bufferSize.length;
-              const uploadSize    = bufferSize.length / 1e+6;
-              //console.log("Byte length: " + bufferSize.length);
-              //console.log("MB: " + bufferSize.length / 1e+6);
-              if(uploadSize != null && uploadSize >=2){
-                resp.json({ message: variableDefined.variables.image_upload_max_size, status : 0 });
-                return;
-              }
-              // to convert base64 format into random filename
-              const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');              
-              fs.writeFileSync(path, base64Data,  {encoding: variableDefined.variables.user_picture_upload_encoding});
+              theModel.findAll(
+              { where: { 
+                  id: getId                                            
+                  }}).then(result => {
+                    var recordData = result[0].dataValues;
+                    delete recordData.profile_pic;
+                    if(result.length > 0){
+                      var oldFileName     = recordData.filename;
+                      if(oldFileName != null){
+                        var filePath = variableDefined.serverPath.userUploadDir + oldFileName;
+                        fs.unlinkSync(filePath);
+                      }
+                      var fileName        = getId + "_" + getData.first_name.toString().replace(/ +/g, "") + variableDefined.variables.user_picture_extension;
+                      const path          = variableDefined.serverPath.userUploadDir + fileName;
+                      const imgdata       = getApiImage;
+                      const bufferSize    = Buffer.from(imgdata.substring(imgdata.indexOf(',') + 1));
+                      const bufferLength  = bufferSize.length;
+                      const uploadSize    = bufferSize.length / 1e+6;
+                      if(uploadSize != null && uploadSize >=1){
+                        resp.json({ message: variableDefined.variables.image_upload_max_size, status : 0 });
+                        return;
+                      }
+                      // to convert base64 format into random filename
+                      const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');              
+                      fs.writeFileSync(path, base64Data,  {encoding: variableDefined.variables.user_picture_upload_encoding});
+                      //Add file name
+                      getData.filename  = fileName;
+                      //Update record with update profile photo
+                      theModel.update(getData,
+                      {
+                          where: {
+                            id: getId
+                          }
+                        }).then((result) => {  
+                          
+                          if(result){
+                            resp.json({ message: variableDefined.variables.record_updated, status : result });
+                            return;
+                          }
+                          else
+                            resp.json({ message: variableDefined.variables.record_update_error, status : result });
+                            return;
+                        })
+                    }                    
+              });              
+            }else{
+              theModel.update(getData,
+                {
+                  where: {
+                    id: getId
+                  }
+                }).then((result) => {
+                  if(result){
+                    resp.json({ message: variableDefined.variables.record_updated, status : result });
+                    return;
+                  }
+                  else
+                    resp.json({ message: variableDefined.variables.record_update_error, status : result });
+                    return;
+                })
             }
-            theModel.update(getData,
-            {
-              where: {
-                id: getId
-              }
-            }).then((result) => {
-              if(result){
-                resp.json({ message: variableDefined.variables.record_updated, status : result });
-                return;
-              }
-              else
-                resp.json({ message: variableDefined.variables.record_update_error, status : result });
-                return;
-              })
           }
     });
   }   
