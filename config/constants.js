@@ -44,10 +44,12 @@ module.exports  =
 
                 "csvFileCreated"                :   "CSV file created succesfully",
             },
-            "userCsvHeader" : [
-                {id: 'first_name', title: 'First Name'},
-                {id: 'last_name', title: 'Last Name'}
-            ]
+            "exportTable" : {
+                "userCsvHeader" : [
+                    {id: 'first_name', title: 'First Name'},{id: 'last_name', title: 'Last Name'},{id: 'username', title: 'Username'},
+                    {id: 'address', title: 'Address'},{id: 'city', title: 'City'}
+                ]
+            },            
         },
   }
 ]

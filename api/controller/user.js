@@ -222,97 +222,24 @@ exports.create  = function(req, resp) {
 };
 
 exports.export  = function(req, res){
-  var csvExportFile   = '_user.csv';
+  var csvExportFile   = new Date().getTime() + '_user.csv';
   var csvFilePath     = variableDefined.serverPath.userExport + csvExportFile;
-  //res.attachment(csvFilePath);
-  //const ws = fs.createWriteStream(csvFilePath);
-  // const options = { 
-  //   fieldSeparator: ',',
-  //   filename:csvFilePath,
-  //   quoteStrings: '"',
-  //   decimalSeparator: '.',
-  //   showLabels: true, 
-  //   showTitle: true,
-  //   title: 'My Awesome CSV',
-  //   useTextFile: false,
-  //   useBom: true,
-  //   useKeysAsHeaders: true,
-  //   // headers: ['Column 1', 'Column 2', etc...] <-- Won't work with useKeysAsHeaders present!
-  // };
-  // const csvExporter = new ExportToCsv(options);
-
   var userRec = [];
-
-
   const csvWriter = createCsvWriter({
     path: csvFilePath,
-    header: variableDefined.userCsvHeader
+    header: variableDefined.exportTable.userCsvHeader
   });
-/*
-  const data = [
-    {
-      name: 'John',
-      surname: 'Snow',
-      age: 26,
-      gender: 'M'
-    }, {
-      name: 'Clair',
-      surname: 'White',
-      age: 33,
-      gender: 'F',
-    }, {
-      name: 'Fancy',
-      surname: 'Brown',
-      age: 78,
-      gender: 'F'
-    }
-  ];
-
-  csvWriter
-  .writeRecords(data)
-  .then(()=> console.log('The CSV file was written successfully'));
-*/
-
-
   theModel.findAll().then( (result) => {
-      //var fields        = ['first_name', 'last_name', 'email', 'username', 'address', 'city'];
-      //var fieldNames    = ['First Name', 'Last Name', 'Email', 'Username', 'Address', 'City'];
-      //var csvData     = json2csv({ data: result, fields: fields, fieldNames: fieldNames });
-      //return res.send(csvData);
-      // var userRec     = result;
-      // //console.log(result);
-      // //delete userRec.dataValues.profile_pic;
-      // fastcsv
-      //   .write(userRec, { headers: true })
-      //   .pipe(ws);
-      // res.json({ message: variableDefined.variables.csvFileCreated,status : 1 }); 
-      //csvExporter.generateCsv(result, true);
-
-      /*var theRecord   = result[0].dataValues;
-      console.log(theRecord);
-      // theRecord.forEach(rec => {
-      //     console.log('Rec: ', rec);
-      // })
-      userRec.push(theRecord);
-      csvExporter.generateCsv(userRec, true);
-      res.json({ message: variableDefined.variables.csvFileCreated, status : 1 });*/
-      // var theRecord   = result[0].dataValues;
-      // res.statusCode = 200;
-      // res.setHeader('Content-Type', 'text/csv');
-      // res.setHeader("Content-Disposition", 'attachment; filename='+csvFilePath);
-      // res.csv(theRecord, true);
-      //userRec.push(theRecord);
-      //csvObj.from.array(userRec).to.path(csvFilePath);
       var theRecord   = result;
-      //console.log("User Record: ",theRecord);
+      theRecord.forEach(rec => {
+        delete rec.dataValues.profile_pic;
+        userRec.push(rec.dataValues);
+      })
       csvWriter
-        .writeRecords(theRecord)
+        .writeRecords(userRec)
         .then(()=> res.json({ message: variableDefined.variables.csvFileCreated, status : 1 }));
-
-  })
+  });
 }
-
-
 
 /*-----------------------------------
 /-------------UPDATE USER -----------
