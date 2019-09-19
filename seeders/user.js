@@ -2,7 +2,7 @@
 
 
 module.exports = {
-  /*up: (queryInterface, Sequelize) => {
+  up: (queryInterface, Sequelize) => {
 
 
     return Promise.all([
@@ -18,22 +18,26 @@ module.exports = {
       }).then(() => {
       console.log('Update Table column successfully.');
       }) 
-    ]);             
-  },*/
-  up: async (queryInterface, Sequelize) => {
-    try {
-      await queryInterface.addColumn('user', 'profile_pic', {
-        type: Sequelize.STRING,
-        after: "email"
-      });
-      await queryInterface.addColumn('user', 'status', {
-        type: Sequelize.INTEGER,
-        after: "email"
-      });
-      return Promise.resolve();
-    } catch (e) {
-      return Promise.reject(e);
-    }
+    ]);
+
+
+
+    // return [
+    //   queryInterface.addColumn('user', 'profile_pic', {
+    //     type: Sequelize.STRING,
+    //     after: "filename"
+    //   }).then(() => {
+    //   console.log('Update Table column successfully.');
+    //   }),
+    //   queryInterface.addColumn('user', 'status', {
+    //     type: Sequelize,
+    //     after: "profile_pic"
+    //   }).then(() => {
+    //   console.log('Update Table column successfully.');
+    //   })  
+
+    // ]
+             
   },
   down: (queryInterface, Sequelize) => {
     return [
