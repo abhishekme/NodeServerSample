@@ -7,7 +7,7 @@ var bCrypt                  = require('bcrypt-nodejs');
 const { body,validationResult,check } = require('express-validator');
 const Sequelize             = require('sequelize');
 const Op                    = Sequelize.Op;
-const db                    = require('../models');
+const db                    = require('../../models');
 const theModel              = db.user; 
 const theContr              = userController;
 const variableDefined       = constants[0].application;
@@ -156,7 +156,7 @@ exports.login  = function(req, resp){
                 var userRec     = result;
                 //Show picture image
                 var picPath     = variableDefined.serverPath.userUploadDir +  userRec.dataValues.filename;
-                delete userRec.dataValues.profile_pic;
+                //delete userRec.dataValues.profile_pic;
                 userRec.dataValues.profile_pic = picPath;
                 resp.json({ message: variableDefined.variables.login_success, status : 1, loggedUser: userRec.dataValues});
               }
@@ -232,7 +232,7 @@ exports.export  = function(req, res){
   theModel.findAll().then( (result) => {
       var theRecord   = result;
       theRecord.forEach(rec => {
-        delete rec.dataValues.profile_pic;
+        //delete rec.dataValues.profile_pic;
         userRec.push(rec.dataValues);
       })
       csvWriter
@@ -316,7 +316,7 @@ exports.update = function(req, resp) {
                   id: getId                                            
                   }}).then(result => {
                     var recordData = result[0].dataValues;
-                    delete recordData.profile_pic;
+                    //delete recordData.profile_pic;
                     if(result.length > 0){
                       var oldFileName     = recordData.filename;
                       if(oldFileName != null){

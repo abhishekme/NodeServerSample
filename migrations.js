@@ -22,7 +22,7 @@ connectionString.connect(function(err) {
 });
 return true;
 });
-const runDatabase                = require("./api/models");
+const runDatabase                = require("./models");
 //================================================================
 //---------------------Migration Start----------------------------
 //================================================================
