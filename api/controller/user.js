@@ -4,30 +4,15 @@
 var userController          = require('./user');
 var constants               = require('../../config/constants');
 var bCrypt                  = require('bcrypt-nodejs');
-const { body,validationResult,check } = require('express-validator');
+const { body,validationResult } = require('express-validator');
 const Sequelize             = require('sequelize');
 const Op                    = Sequelize.Op;
 const db                    = require('../../models');
 const theModel              = db.user; 
 const theContr              = userController;
 const variableDefined       = constants[0].application;
-const fs                    = require('fs');
-//const json2csv = require('json2csv').parse;
-//const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-//const fastcsv = require('fast-csv');
-//import { ExportToCsv } from 'export-to-csv';
-//const ExportToCsv = require('export-to-csv').ExportToCsv;
-//const csv = require('csv').csv;
-//const csvParser = require('csv-parser');
+const fs                    = require('fs'),async = require('async'),csv = require('csv');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-var thisObj                 = this;
-
-/*thisObj.userById = function(theId){
-  
-  var getID = theId;
-  console.log('Get Id: ', theId);
-  
-}*/
 
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
@@ -36,36 +21,32 @@ exports.validate = (method) => {
   switch (method) {
     case 'create' : {
      return [ 
-        body('first_name', variableDefined.variables.first_name_required).exists(),
-        body('last_name', variableDefined.variables.last_name_required).exists(),
-        body('username', variableDefined.variables.username_required).exists(),
-        body('email', variableDefined.variables.email_required).exists().isEmail(),
+        body('first_name', variableDefined.variables.validation_required.first_name_required).exists(),
+        body('last_name', variableDefined.variables.validation_required.last_name_required).exists(),
+        body('username', variableDefined.variables.validation_required.username_required).exists(),
+        body('email', variableDefined.variables.validation_required.email_required).exists().isEmail(),
         body('password')  
-            .exists().withMessage(variableDefined.variables.password_required)
-            .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.password_strength_step1)
-            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.password_strength_step2),
+            .exists().withMessage(variableDefined.variables.validation_required.password_required)
+            .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.validation_required.password_strength_step1)
+            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.validation_required.password_strength_step2),
        ]   
     }
     case 'login' : {
       return [ 
-         body('email', variableDefined.variables.email_required).exists().isEmail(),
-         body('password', variableDefined.variables.password_required).exists(),
+         body('email', variableDefined.variables.validation_required.email_required).exists().isEmail(),
+         body('password', variableDefined.variables.validation_required.password_required).exists(),
         ]   
      }
     case 'update' : {
       return [ 
-         body('first_name', variableDefined.variables.first_name_required).exists(),
-         body('last_name', variableDefined.variables.last_name_required).exists(),
-         body('username', variableDefined.variables.username_required).exists(),
+         body('first_name', variableDefined.variables.validation_required.first_name_required).exists(),
+         body('last_name', variableDefined.variables.validation_required.last_name_required).exists(),
+         body('username', variableDefined.variables.validation_required.username_required).exists(),
          body('password')  
-            .exists().withMessage(variableDefined.variables.password_required)
-            .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.password_strength_step1)
-            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.password_strength_step2),
-        //  body('password', 'Password is required')
-        //     .isLength({min: 8, max:15})
-        //     .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d@$.!%*#?&]/)
-        //     .withMessage('Password should not be empty, minimum eight characters maximum fifteen, at least one letter, one number and one special character'),
-         body('email', variableDefined.variables.email_required).exists().isEmail()
+            .exists().withMessage(variableDefined.variables.validation_required.password_required)
+            .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.validation_required.password_strength_step1)
+            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.validation_required.password_strength_step2),
+         body('email', variableDefined.variables.validation_required.email_required).exists().isEmail()
         ]   
      }
   }
@@ -137,7 +118,7 @@ exports.login  = function(req, resp){
          }
         }).then(result => {
             if(result === null || result === undefined){
-              resp.json({ message: variableDefined.variables.email_not_exists,status : 0 });
+              resp.json({ message: variableDefined.variables.validation_required.email_not_exists,status : 0 });
               return;
             }
             if(result.dataValues.id > 0){
@@ -146,12 +127,12 @@ exports.login  = function(req, resp){
                
               if(!theModel.validPassword(postBody.password, dbPassword)){
                 result = null;
-                resp.json({ message: variableDefined.variables.password_invalid,status : 0 });
+                resp.json({ message: variableDefined.variables.validation_required.password_invalid,status : 0 });
                 return;
               }
               var userRec = result.dataValues;
               if(req.session != undefined){
-                var curSession  = req.session;
+                var curSession  = req.session;  
                 curSession.userRec = userRec;
                 var userRec     = result;
                 //Show picture image
@@ -175,8 +156,6 @@ exports.login  = function(req, resp){
 exports.getList = function(req, res) {
   theModel.findAll().then( (result) => res.json(result))
 };
-
-
 
 /*-----------------------------------
 /-------------CREATE USER -----------
@@ -220,7 +199,12 @@ exports.create  = function(req, resp) {
      return;
   }
 };
-
+/*-----------------------------------
+/-------------EXPORT USER -----------
+/---@body: NULL----------------------
+/---@output:  Export .csv file-------
+/------------------------------------
+------------------------------------*/
 exports.export  = function(req, res){
   var csvExportFile   = new Date().getTime() + '_user.csv';
   var csvFilePath     = variableDefined.serverPath.userExport + csvExportFile;
@@ -232,12 +216,29 @@ exports.export  = function(req, res){
   theModel.findAll().then( (result) => {
       var theRecord   = result;
       theRecord.forEach(rec => {
-        //delete rec.dataValues.profile_pic;
         userRec.push(rec.dataValues);
       })
       csvWriter
         .writeRecords(userRec)
         .then(()=> res.json({ message: variableDefined.variables.csvFileCreated, status : 1 }));
+  });
+}
+
+exports.import  = function(req, res, next){
+    console.log('Importing data');
+    var fstream;
+    req.pipe(req.busboy);
+    req.busboy.on('file', function (fieldname, file, filename) {
+      console.log("Uploading: " + filename);
+      //Path where image will be uploaded
+        var fileName        = new Date().getTime() + '_user-import.jpg';
+        const importPath    = variableDefined.serverPath.userImport + fileName;
+        fstream = fs.createWriteStream(importPath); 
+        file.pipe(fstream);
+        fstream.on('close', function () {    
+           console.log("Upload Finished of " + filename); 
+           res.json({ message: variableDefined.variables.csvFileUploaded, status : 1 });             
+        });
   });
 }
 
@@ -316,7 +317,6 @@ exports.update = function(req, resp) {
                   id: getId                                            
                   }}).then(result => {
                     var recordData = result[0].dataValues;
-                    //delete recordData.profile_pic;
                     if(result.length > 0){
                       var oldFileName     = recordData.filename;
                       if(oldFileName != null){
@@ -329,7 +329,7 @@ exports.update = function(req, resp) {
                       const bufferSize    = Buffer.from(imgdata.substring(imgdata.indexOf(',') + 1));
                       const bufferLength  = bufferSize.length;
                       const uploadSize    = bufferSize.length / 1e+6;
-                      if(uploadSize != null && uploadSize >=1){
+                      if(uploadSize != null && uploadSize >= variableDefined.serverPath.user_picture_max_size){
                         resp.json({ message: variableDefined.variables.image_upload_max_size, status : 0 });
                         return;
                       }

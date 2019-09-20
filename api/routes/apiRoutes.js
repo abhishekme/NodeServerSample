@@ -31,8 +31,10 @@ app.route('/user')
     .delete(isAuth, userController.delete)
     .post(userController.validate('create'),userController.create)
 app.put('/user', isAuth, userController.validate('update'),userController.update);  //PUT requires a callback
-app.route('/user/export')
+app.route('/user/export')  
     .post(isAuth, userController.export)  //Need a csv file mandatory
+app.route('/user/upload')
+    .post(isAuth, userController.import)
 //-------------------- DO OTHER SECTION ROUTE ---------------------------------
 
 
