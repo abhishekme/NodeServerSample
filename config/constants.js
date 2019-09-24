@@ -48,7 +48,10 @@ module.exports  =
                 "logged_out"                    :  "Session Expired, Please login again",
 
                 "csvFileCreated"                :   "CSV file created succesfully",
-                "csvFileUploaded"                :   "File uploaded succesfully",
+                "csvFileUploaded"               :   "File uploaded succesfully",
+                "csvFileImportError"            :   "Please upload only csv[.csv] file",
+
+                "unhandledError"                :   "Unhanled API server Error!"
             },
             "exportTable" : {
                 "userCsvHeader" : [

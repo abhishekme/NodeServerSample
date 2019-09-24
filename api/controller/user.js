@@ -4,6 +4,12 @@
 var userController          = require('./user');
 var constants               = require('../../config/constants');
 var bCrypt                  = require('bcrypt-nodejs');
+
+const ParseCSV              = require('bluebird');
+const Liana                 = require('forest-express-sequelize');
+const faker                 = require('faker');
+const parseDataUri          = require('parse-data-uri');
+
 const { body,validationResult } = require('express-validator');
 const Sequelize             = require('sequelize');
 const Op                    = Sequelize.Op;
@@ -12,7 +18,7 @@ const theModel              = db.user;
 const theContr              = userController;
 const variableDefined       = constants[0].application;
 const fs                    = require('fs'),async = require('async'),csv = require('csv');
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const createCsvWriter       = require('csv-writer').createObjectCsvWriter;
 
 //-----------------------------------------------------------------------
 //---------------- API Required Field Validation ------------------------
@@ -45,7 +51,7 @@ exports.validate = (method) => {
          body('password')  
             .exists().withMessage(variableDefined.variables.validation_required.password_required)
             .isLength({ min: 5, max:15 }).withMessage(variableDefined.variables.validation_required.password_strength_step1)
-            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,}$/).withMessage(variableDefined.variables.validation_required.password_strength_step2),
+            .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{5,15}$/).withMessage(variableDefined.variables.validation_required.password_strength_step2),
          body('email', variableDefined.variables.validation_required.email_required).exists().isEmail()
         ]   
      }
@@ -171,7 +177,8 @@ exports.create  = function(req, resp) {
   var getData   = req.body || null;
   if(typeof getData === 'object'){
      var getEmail       = getData.email || '';
-     var getUserName    = getData.username;
+     var getUserName    = getData.username || '';
+     var getApiImage =  req.body.profile_pic || null;
      if(getEmail){
          theModel.findOne({           
            where: {
@@ -186,6 +193,59 @@ exports.create  = function(req, resp) {
             if(getData.password != undefined){
                var hashPassword = theContr.hashPassword(getData.password);
                if(hashPassword) getData.password = hashPassword;
+            }
+            //processing image
+            if(getApiImage != null){
+              theModel.findAll(
+              { where: { 
+                  id: getId                                            
+                  }}).then(result => {
+                    var recordData = result[0].dataValues;
+                    if(result.length > 0){
+                      var oldFileName     = recordData.filename;
+                      if(oldFileName != null){
+                        var filePath = variableDefined.serverPath.userUploadDir + oldFileName;
+                        fs.unlinkSync(filePath);
+                      }
+                      var fileName        = getId + "_" + getData.first_name.toString().replace(/ +/g, "") + variableDefined.variables.user_picture_extension;
+                      const path          = variableDefined.serverPath.userUploadDir + fileName;
+                      const imgdata       = getApiImage;
+                      const bufferSize    = Buffer.from(imgdata.substring(imgdata.indexOf(',') + 1));
+                      const bufferLength  = bufferSize.length;
+                      const uploadSize    = bufferSize.length / 1e+6;
+                      if(uploadSize != null && uploadSize >= variableDefined.variables.user_picture_max_size){
+                        resp.json({ message: variableDefined.variables.image_upload_max_size, status : 0 });
+                        return;
+                      }
+                      // to convert base64 format into random filename
+                      const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');
+                      fs.writeFileSync(path, base64Data,  {encoding: variableDefined.variables.user_picture_upload_encoding});
+                      //Add file name
+                      getData.filename  = fileName;
+                      //Update record with update profile photo
+                      theModel.update(getData,
+                      {
+                          where: {
+                            id: getId
+                          }
+                        }).then((result) => {  
+                          
+                          if(result){
+                            resp.json({ message: variableDefined.variables.record_updated, status : result });
+                            return;
+                          }
+                          else
+                            resp.json({ message: variableDefined.variables.record_update_error, status : result });
+                            return;
+                        }).catch( (err) => {
+                          resp.json({ message: variableDefined.variables.unhandledError, status : 0 });
+                          return;
+                        });
+                    }                    
+              }).catch( (err) => {
+                resp.json({ message: variableDefined.variables.unhandledError, error: err, status : 0 });
+                return;
+              });              
             }
             theModel.create(req.body).then((insertRecord) => {
               if(insertRecord.dataValues.id != undefined &&  insertRecord.dataValues.id > 0){
@@ -225,21 +285,59 @@ exports.export  = function(req, res){
 }
 
 exports.import  = function(req, res, next){
-    console.log('Importing data');
     var fstream;
     req.pipe(req.busboy);
-    req.busboy.on('file', function (fieldname, file, filename) {
+
+     console.log('CSV File info: ');
+
+    // let parsed = parseDataUri(req.body.data.attributes.values['CSV file']);
+    // let productType = req.body.data.attributes.values['Type'];
+
+    req.busboy.on('file', function (fieldname, file, filename, encoding, mimetype) {
       console.log("Uploading: " + filename);
-      //Path where image will be uploaded
-        var fileName        = new Date().getTime() + '_user-import.jpg';
-        const importPath    = variableDefined.serverPath.userImport + fileName;
+        var importFile  = filename;
+        //console.log('File: ', file, " :: ", filename);
+        console.log('File [' + fieldname + ']: filename: ' + filename + ', encoding: ' + encoding + ', mimetype: ' + mimetype);
+        if(filename != null && mimetype != 'text/csv'){
+          res.json({ message: variableDefined.variables.csvFileImportError, status : 0 });
+          return;
+        }
+        //Path where file will be uploaded
+        //var fileName        = new Date().getTime() + fileName;
+        const importPath    = variableDefined.serverPath.userImport + filename;
         fstream = fs.createWriteStream(importPath); 
         file.pipe(fstream);
         fstream.on('close', function () {    
            console.log("Upload Finished of " + filename); 
            res.json({ message: variableDefined.variables.csvFileUploaded, status : 1 });             
         });
-  });
+
+        var input = fs.createReadStream(importPath);
+        var parser = csv.parse({
+          columns: true,
+          relax: true
+        });  
+        var inserter = async.cargo(function(user, inserterCallback) {
+          theModel.bulkCreate(user).then(function() {
+              inserterCallback();
+            }
+          )
+          .catch((err) => {
+             console.log('DB Insert Error: ',err);
+          })
+        },1000);
+        var line;
+        parser.on('readable', function () {
+          while(line = parser.read()) {
+            console.log('Line fetch: ', line);
+            inserter.push(line);
+          }
+        });
+        input.pipe(parser);
+        var inserterCallback = () => {           
+        }
+        
+  });  
 }
 
 /*-----------------------------------
@@ -250,31 +348,6 @@ exports.import  = function(req, res, next){
 exports.update = function(req, resp) {
   //Add required validation
   var contentType = req.headers['content-type'];
-  if(contentType  ===  variableDefined.contentType.formdata) {
-      //resp.setHeader('Content-Type', 'multipart/form-data');
-      console.log('Content Type: form-data', req.files);
-      // req.on('data', (data) => {
-      //   var dataObj =  (data.toString());
-      //   console.log(dataObj);
-      // });
-      // req.busboy.on('body', function (body) {
-
-      //   console.log("body: ", body);
-      // });
-  }
-  if(contentType  ===  variableDefined.contentType.urlencode) {
-    console.log('Content Type: urlencode');
-  }
-
-  //var validReturn   = theContr.apiValidation(req, resp);
-  //if(validReturn)   return;
-  // if(req.headers != null){
-  //   var contype = req.headers['content-type'];
-  //   console.log("Headers: ",checkHeaders);
-  // }
-  // console.log('Check headers: ', req.headers.origin, " :: ", req.method);
-  // return false;
-
   var getData     = req.body || null;
   var getId       = req.body.id || 0;
   var getEmail    = req.body.email || '';
@@ -282,16 +355,13 @@ exports.update = function(req, resp) {
   //image upload processing
   var getApiImage =  req.body.profile_pic || null;
   delete req.body.id;
-
   var curSession  = req.session;
-  var logUserRec  = curSession.userRec;
 
   if(!getId){
-    resp.json({ message: variableDefined.variables.id_not_found,status : -1 }); 
+    resp.json({ message: variableDefined.variables.id_not_found,status : -1 });
     return;
   }
   else if(getEmail != null && getUserName != null){
-
       theModel.findAll(
       { where: { 
         [Op.or]: [
@@ -329,12 +399,12 @@ exports.update = function(req, resp) {
                       const bufferSize    = Buffer.from(imgdata.substring(imgdata.indexOf(',') + 1));
                       const bufferLength  = bufferSize.length;
                       const uploadSize    = bufferSize.length / 1e+6;
-                      if(uploadSize != null && uploadSize >= variableDefined.serverPath.user_picture_max_size){
+                      if(uploadSize != null && uploadSize >= variableDefined.variables.user_picture_max_size){
                         resp.json({ message: variableDefined.variables.image_upload_max_size, status : 0 });
                         return;
                       }
                       // to convert base64 format into random filename
-                      const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');              
+                      const base64Data  = imgdata.replace(/^data:([A-Za-z-+/]+);base64,/, '');
                       fs.writeFileSync(path, base64Data,  {encoding: variableDefined.variables.user_picture_upload_encoding});
                       //Add file name
                       getData.filename  = fileName;
@@ -353,8 +423,14 @@ exports.update = function(req, resp) {
                           else
                             resp.json({ message: variableDefined.variables.record_update_error, status : result });
                             return;
-                        })
+                        }).catch( (err) => {
+                          resp.json({ message: variableDefined.variables.unhandledError, status : 0 });
+                          return;
+                        });
                     }                    
+              }).catch( (err) => {
+                resp.json({ message: variableDefined.variables.unhandledError, error: err, status : 0 });
+                return;
               });              
             }else{
               theModel.update(getData,
@@ -370,9 +446,15 @@ exports.update = function(req, resp) {
                   else
                     resp.json({ message: variableDefined.variables.record_update_error, status : result });
                     return;
-                })
+                }).catch( (err) => {
+                  resp.json({ message: variableDefined.variables.unhandledError, error: err, status : 0 });
+                  return;
+                });
             }
           }
+    }).catch( (err) => {
+      resp.json({ message: variableDefined.variables.unhandledError, error: err, status : 0 });
+      return;
     });
   }   
 };
@@ -391,5 +473,8 @@ exports.delete = function(req, resp) {
         resp.json({ message: variableDefined.variables.record_deleted,'status' : result });
       else
         resp.json({ message: variableDefined.variables.record_deleted_error,'status' : result });
-  })
+  }).catch( (err) => {
+    resp.json({ message: variableDefined.variables.unhandledError, error: err, status : 0 });
+    return;
+  });
 };

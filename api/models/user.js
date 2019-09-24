@@ -16,11 +16,12 @@ module.exports = (sequelize, DataTypes) => {
       password: DataTypes.STRING,
       last_name: DataTypes.STRING,
       email: DataTypes.STRING,
+      status: DataTypes.BIGINT(11),
       username: DataTypes.STRING,
       address: DataTypes.STRING,
       city: DataTypes.STRING,
       filename: DataTypes.STRING,
-      // profile_pic: DataTypes.TEXT
+      profile_pic: DataTypes.TEXT
     },
     /*{
       classMethods: {
