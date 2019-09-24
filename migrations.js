@@ -17,14 +17,14 @@ connectionString.connect(function(err) {
     connectionString.connect(function(err) {
     connectionString.query(theDatabase, function (err, result) {
     if (err) throw err;
-    //console.log("Database created");
+    console.log("Database created");
   });
 });
-return true;
+//return true;
 });
 const runDatabase                = require("./models");
 //================================================================
-//---------------------Migration Start----------------------------
+//---------------------Migration Start---//-------------------------
 //================================================================
 //CREATE Tables automatically in database - from existing models
 //Run Once on the server
@@ -37,7 +37,8 @@ runDatabase.sequelize.sync().then(() => {
     //       firstName: faker.name.firstName(),
     //       lastName: faker.name.lastName()
     //     }))
-    //   );    
+    //   );
+    return;
 });
 //================================================================
 //---------------------Migration End------------------------------

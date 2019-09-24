@@ -26,7 +26,7 @@ module.exports  =
                 "password_invalid"              : "Password is invalid, please try again",
                 "password_required"             : "Password is required",
                 "password_strength_step1"       : "Should be minimum 5 and maximum 15 character long.",
-                "password_strength_step2"       : "Password should not be empty, minimum 5 characters maximum 15, at least one capital letter, one number and one special character",
+                "password_strength_step2"       : "Password should not be empty, minimum 5 characters maximum 15, at least one capital letter, one number",
                 },
 
                 "login_success"                 : "Login Success",

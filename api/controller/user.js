@@ -186,15 +186,18 @@ exports.create  = function(req, resp) {
           }
          }).then(result => {
            if(result != null){
-             resp.json({ message: variableDefined.variables.email_or_username_exists,record : result });
+             resp.json({ message: variableDefined.variables.validation_required.email_or_username_exists,record : result });
              return;
            }
            if(result === null){
             if(getData.password != undefined){
                var hashPassword = theContr.hashPassword(getData.password);
                if(hashPassword) getData.password = hashPassword;
-            }
-            //processing image
+            }            
+            theModel.create(req.body).then((insertRecord) => {
+              if(insertRecord.dataValues.id != undefined &&  insertRecord.dataValues.id > 0){
+                var getId = insertRecord.dataValues.id;
+                //processing image
             if(getApiImage != null){
               theModel.findAll(
               { where: { 
@@ -228,14 +231,16 @@ exports.create  = function(req, resp) {
                           where: {
                             id: getId
                           }
-                        }).then((result) => {  
+                        }).then((result) => { 
                           
-                          if(result){
-                            resp.json({ message: variableDefined.variables.record_updated, status : result });
-                            return;
-                          }
-                          else
-                            resp.json({ message: variableDefined.variables.record_update_error, status : result });
+                          // if(result){
+                          //   resp.json({ message: variableDefined.variables.record_updated, status : result });
+                          //   return;
+                          // }
+                          // else
+                            //resp.json({ message: variableDefined.variables.record_update_error, status : result });
+                            //return;
+                            resp.json({ message: 'Record Inserted!',status : 1, record: insertRecord });
                             return;
                         }).catch( (err) => {
                           resp.json({ message: variableDefined.variables.unhandledError, status : 0 });
@@ -246,11 +251,11 @@ exports.create  = function(req, resp) {
                 resp.json({ message: variableDefined.variables.unhandledError, error: err, status : 0 });
                 return;
               });              
-            }
-            theModel.create(req.body).then((insertRecord) => {
-              if(insertRecord.dataValues.id != undefined &&  insertRecord.dataValues.id > 0){
-                resp.json({ message: 'Record Inserted!',status : 1, record: insertRecord });
+            }else{
+               resp.json({ message: 'Record Inserted!',status : 1, record: insertRecord });
                 return;
+            }
+                
               }
             })
           }
@@ -307,11 +312,10 @@ exports.import  = function(req, res, next){
         const importPath    = variableDefined.serverPath.userImport + filename;
         fstream = fs.createWriteStream(importPath); 
         file.pipe(fstream);
-        fstream.on('close', function () {    
+        fstream.on('close', function () {     
            console.log("Upload Finished of " + filename); 
            res.json({ message: variableDefined.variables.csvFileUploaded, status : 1 });             
         });
-
         var input = fs.createReadStream(importPath);
         var parser = csv.parse({
           columns: true,
@@ -329,6 +333,13 @@ exports.import  = function(req, res, next){
         var line;
         parser.on('readable', function () {
           while(line = parser.read()) {
+            var row   = line;
+            if(line.status != undefined){
+              line.status  = (line.status);
+            }
+            if(line.password != undefined){
+              line.password  = theContr.hashPassword(line.password);
+            }
             console.log('Line fetch: ', line);
             inserter.push(line);
           }

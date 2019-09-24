@@ -15,13 +15,15 @@ module.exports = (sequelize, DataTypes) => {
       first_name: DataTypes.STRING,
       password: DataTypes.STRING,
       last_name: DataTypes.STRING,
-      email: DataTypes.STRING,
-      status: DataTypes.BIGINT(11),
+      email: DataTypes.STRING,      
       username: DataTypes.STRING,
-      address: DataTypes.STRING,
       city: DataTypes.STRING,
       filename: DataTypes.STRING,
-      profile_pic: DataTypes.TEXT
+      profile_pic: DataTypes.TEXT,
+      abcd: {
+        type: DataTypes.STRING,
+        default: NULL
+      }
     },
     /*{
       classMethods: {
