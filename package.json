@@ -30,7 +30,7 @@
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.19.2",
     "migrate-orm2": "^4.0.5",
-    "mongoose": "~3.6.13",
+    "mongoose": "~5.7.5",
     "mysql2": "^1.6.5",
     "njwt": "^0.4.0",
     "orm": "^5.0.4",
