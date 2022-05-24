@@ -32,7 +32,7 @@
     "migrate-orm2": "^4.0.5",
     "mongoose": "~3.6.13",
     "mysql2": "^1.6.5",
-    "njwt": "^0.4.0",
+    "njwt": "^1.0.0",
     "orm": "^5.0.4",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
