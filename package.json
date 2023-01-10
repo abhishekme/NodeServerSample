@@ -30,7 +30,7 @@
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.19.2",
     "migrate-orm2": "^4.0.5",
-    "mongoose": "~3.6.13",
+    "mongoose": "~6.8.3",
     "mysql2": "^1.6.5",
     "njwt": "^0.4.0",
     "orm": "^5.0.4",
@@ -40,7 +40,7 @@
     "path": "^0.12.7",
     "remove": "^0.1.5",
     "sails-mysql": "^1.0.1",
-    "sails-postgresql": "^1.0.2",
+    "sails-postgresql": "^5.0.1",
     "sqlite3": "^4.1.0",
     "waterline": "^0.13.6"
   },
