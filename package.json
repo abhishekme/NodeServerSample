@@ -28,7 +28,7 @@
     "express-session": "^1.16.2",
     "fast-csv": "^3.4.0",
     "jsonwebtoken": "^8.5.1",
-    "knex": "^0.19.2",
+    "knex": "^2.4.0",
     "migrate-orm2": "^4.0.5",
     "mongoose": "~3.6.13",
     "mysql2": "^1.6.5",
